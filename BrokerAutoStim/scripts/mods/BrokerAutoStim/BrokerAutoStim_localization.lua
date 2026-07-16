@@ -331,4 +331,8 @@
 			en = "Size of the HUD icon in pixels.",
 			["zh-cn"] = "HUD图标的像素大小。",
 		},
+		tab_general = {
+			en = "General Settings",
+			["zh-cn"] = "常规设置",
+		},
 	}
