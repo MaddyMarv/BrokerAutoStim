@@ -61,7 +61,7 @@ end
 
 HudElementBrokerAutoStim.update = function(self, dt, t, ui_renderer, render_settings, input_service)
 	HudElementBrokerAutoStim.super.update(self, dt, t, ui_renderer, render_settings, input_service)
-	
+
 	if mod:get("show_hud_icon") then
 		self:update_visibility()
 	end
