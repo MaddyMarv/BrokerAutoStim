@@ -6,7 +6,7 @@ local HUD_ELEMENT_CLASS_NAME = "HudElementBrokerAutoStim"
 
 mod:register_hud_element({
 	class_name = HUD_ELEMENT_CLASS_NAME,
-	filename = "BrokerAutoStim/scripts/mods/BrokerAutoStim/HudElementBrokerAutoStim",
+	filename = "BrokerAutoStim/scripts/mods/BrokerAutoStim/hud/HudElementBrokerAutoStim",
 	use_hud_scale = true,
 	visibility_groups = {
 		"alive",
