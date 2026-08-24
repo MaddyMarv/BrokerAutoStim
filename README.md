@@ -6,7 +6,7 @@ Standalone mod that handles using your broker stims for you. It automatically po
 
 **Options:**
 - Toggle Auto-Stim (Hotkey)
-- Active Profile [Profile 1, Profile 2, Profile 3, Profile 4, Profile 5]
+- Active Profile [Profile 1-5]
 - Cycle Profile (Hotkey)
 - Show Settings on Profile Switch
 - Number of Profiles to Cycle
