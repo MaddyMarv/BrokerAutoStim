@@ -4,7 +4,7 @@
 			["zh-cn"] = "自动注射兴奋剂",
 		},
 		mod_description = {
-			en = "Automatically injects broker stim after being in combat for a set duration.",
+			en = "Automatically uses your Broker stim in combat. Supports profile switching, animation cancels, and combat safety checks.",
 			["zh-cn"] = "在进入战斗一定时间后自动注射自制兴奋剂。",
 		},
 		profile_settings = {

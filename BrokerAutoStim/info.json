@@ -7,7 +7,7 @@
     "funding": {
         "kofi": "https://ko-fi.com/indicabunny"
     },
-    "description": "Automatically injects the broker stim for you after you've been in combat for a set time.",
+    "description": "Automatically uses your Broker stim in combat. Supports profile switching, animation cancels, and combat safety checks.",
     "dependencies": {
         "required": [],
         "self_after": [],
