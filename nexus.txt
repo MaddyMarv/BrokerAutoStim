@@ -30,4 +30,5 @@ Standalone mod that handles using your broker stims for you. It automatically po
 [b]Debug[/b]
 - Enable Debug Messages
 
-[b]Links:[/b] [url=https://github.com/MaddyMarv/BrokerAutoStim]Source Code[/url] | [url=https://www.nexusmods.com/profile/indicabunny]Nexus Mods Profile[/url] | [url=https://ko-fi.com/indicabunny]Support Me on Ko-fi[/url]
+[b]Links:[/b]
+[url=https://github.com/MaddyMarv/BrokerAutoStim]Source Code[/url] | [url=https://www.nexusmods.com/profile/indicabunny]Nexus Mods Profile[/url] | [url=https://ko-fi.com/indicabunny]Support Me on Ko-fi[/url]
