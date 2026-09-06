@@ -1,0 +1,33 @@
+Standalone mod that handles using your broker stims for you. It automatically pops the stim once you have been fighting for a few seconds. It has tons of customization. You can set up multiple profiles, cancel the injection animation automatically, and prevent it from firing while you are attacking, blocking, or doing interactions.
+
+[b]Options:[/b]
+
+[b]General Settings[/b]
+- Toggle Auto-Stim (Hotkey)
+- Show HUD Icon
+- HUD Icon Size
+
+[b]Profile Settings[/b]
+- Active Profile [Profile 1, Profile 2, Profile 3, Profile 4, Profile 5]
+- Cycle Profile (Hotkey)
+- Show Settings on Profile Switch
+- Number of Profiles to Cycle
+- Only With Chemical Dependency
+- Not with Stimm Supply
+- Stim Trigger Mode [Combat Only (use sliders), Non-Combat Only (use sliders), After Ability, Before Ability, Always Stim]
+- Combat Duration (seconds)
+- Out of Combat Timeout (seconds)
+- Animation Cancel Stim
+
+[b]Auto Inject Prevention[/b]
+- Cancel on Push / Block
+- Cancel on Attack (with Attack Cooldown)
+- Cancel While (Carrying Luggable, Reloading, Interacting, Using Auspex, During Combat Ability)
+
+[b]Dangerous Enemy Detection[/b]
+- Block Near Threat & Range Options (Hound, Trapper, Poxburster, Crusher / Mauler, Rager)
+
+[b]Debug[/b]
+- Enable Debug Messages
+
+[b]Links:[/b] [url=https://github.com/MaddyMarv/BrokerAutoStim]Source Code[/url] | [url=https://www.nexusmods.com/profile/indicabunny]Nexus Mods Profile[/url] | [url=https://ko-fi.com/indicabunny]Support Me on Ko-fi[/url]
