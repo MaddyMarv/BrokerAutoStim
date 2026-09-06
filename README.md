@@ -4,6 +4,8 @@
 Standalone mod that handles using your broker stims for you. It automatically pops the stim once you have been fighting for a few seconds. It has tons of customization. You can set up multiple profiles, cancel the injection animation automatically, and prevent it from firing while you are attacking, blocking, or doing interactions.
 
 **Options:**
+
+**General Settings**
 - Toggle Auto-Stim (Hotkey)
 - Show HUD Icon
 - HUD Icon Size
