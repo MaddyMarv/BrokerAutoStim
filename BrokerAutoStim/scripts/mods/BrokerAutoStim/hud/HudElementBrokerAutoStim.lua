@@ -47,8 +47,8 @@ HudElementBrokerAutoStim.init = function(self, parent, draw_layer, start_scale)
 end
 
 HudElementBrokerAutoStim.update_visibility = function(self)
-	local should_show = mod:get("show_hud_icon") and mod.is_broker_with_stim()
-	self._widgets_by_name.broker_auto_stim.style.icon.visible = should_show
+	local should_show = mod:get("show_hud_icon") and mod.is_broker_with_stim and mod.is_broker_with_stim()
+	self._widgets_by_name.broker_auto_stim.style.icon.visible = should_show or false
 end
 
 HudElementBrokerAutoStim.set_visible = function(self, visible)
