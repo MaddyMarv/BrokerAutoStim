@@ -557,7 +557,11 @@ local function _get_combat_ability_cooldown()
         return nil
     end
 
-    return ability_extension:remaining_ability_cooldown("combat_ability")
+    if ability_extension:is_ability_resource_regen_paused("combat_ability") then
+        return 0
+    end
+
+    return ability_extension:missing_ability_resource_until_next_charge("combat_ability") or 0
 end
 
 local function _is_combat_ability_active(allow_on_ability_use)
