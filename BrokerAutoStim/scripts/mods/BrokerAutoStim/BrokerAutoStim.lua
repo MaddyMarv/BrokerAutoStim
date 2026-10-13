@@ -1085,7 +1085,7 @@ mod.toggle_auto_stim = function(keybind_is_pressed)
 end
 
 mod.update = function(dt)
-    if not auto_stim_enabled then
+    if not mod:is_enabled() or not auto_stim_enabled then
         return
     end
 
@@ -1805,6 +1805,21 @@ end)
 mod.on_all_mods_loaded = function()
     if Managers.package then
         Managers.package:load("packages/ui/views/inventory_background_view/inventory_background_view", mod.name, nil, true)
+    end
+end
+
+mod.on_enabled = function(initial_call)
+    _reset_all_state()
+end
+
+mod.on_disabled = function(initial_call)
+    _reset_all_state()
+end
+
+mod.on_unload = function(exit_game)
+    _reset_all_state()
+    if Managers.event then
+        Managers.event:unregister(mod, "player_unit_spawned")
     end
 end
 
