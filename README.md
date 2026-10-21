@@ -3,7 +3,8 @@
 
 Automatically uses your Broker stim in combat. Supports profile switching, animation cancels, and combat safety checks so it won't interrupt attacks or interactions.
 
-**Options:**
+<details>
+<summary><b>Mod Settings / Commands</b></summary>
 
 **General Settings**
 - Toggle Auto-Stim (Hotkey)
@@ -32,5 +33,6 @@ Automatically uses your Broker stim in combat. Supports profile switching, anima
 
 **Debug**
 - Enable Debug Messages
+</details>
 
 🔗 **Links:** [Source Code](https://github.com/MaddyMarv/BrokerAutoStim) | [Nexus Mods Profile](https://www.nexusmods.com/profile/indicabunny) | [Support Me on Ko-fi](https://ko-fi.com/indicabunny)
