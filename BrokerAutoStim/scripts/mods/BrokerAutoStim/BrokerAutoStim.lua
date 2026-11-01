@@ -239,6 +239,8 @@ local function _on_profile_changed(old_profile, new_profile, show_notification)
     end
 end
 
+local last_active_profile = nil
+
 mod.cycle_profile = function(keybind_is_pressed)
     if not keybind_is_pressed then
         return
@@ -259,8 +261,6 @@ mod.cycle_profile = function(keybind_is_pressed)
     profile_changed_from_hotkey = true
     mod:set("active_profile", next_profile, true)
 end
-
-local last_active_profile = nil
 
 mod.on_setting_changed = function(setting_id)
     if is_loading_profile then
