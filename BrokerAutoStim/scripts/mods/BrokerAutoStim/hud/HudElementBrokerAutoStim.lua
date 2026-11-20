@@ -17,9 +17,9 @@ local ui_definitions = {
 			position = {
 				-370,
 				-135,
-				11
-			}
-		}
+				11,
+			},
+		},
 	},
 	widget_definitions = {
 		broker_auto_stim = UIWidget.create_definition({
@@ -30,10 +30,10 @@ local ui_definitions = {
 				value = "content/ui/materials/icons/weapons/actions/activate",
 				style = {
 					size = { nil, nil },
-				}
-			}
-		}, "broker_auto_stim_container")
-	}
+				},
+			},
+		}, "broker_auto_stim_container"),
+	},
 }
 
 local HudElementBrokerAutoStim = class("HudElementBrokerAutoStim", "HudElementBase")
@@ -47,7 +47,10 @@ HudElementBrokerAutoStim.init = function(self, parent, draw_layer, start_scale)
 end
 
 HudElementBrokerAutoStim.update_visibility = function(self)
-	local should_show = mod:is_enabled() and mod:get("show_hud_icon") and mod.is_broker_with_stim and mod.is_broker_with_stim()
+	local should_show = mod:is_enabled()
+		and mod:get("show_hud_icon")
+		and mod.is_broker_with_stim
+		and mod.is_broker_with_stim()
 	self._widgets_by_name.broker_auto_stim.style.icon.visible = should_show or false
 end
 
