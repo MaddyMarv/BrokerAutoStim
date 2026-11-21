@@ -110,14 +110,6 @@ local function _initialize_profiles()
 	mod:set("profiles", profiles, false)
 end
 
-local function _get_current_profile_data()
-	local active_profile = mod:get("active_profile") or 1
-	if not profiles[active_profile] then
-		profiles[active_profile] = _get_default_profile_data()
-	end
-	return profiles[active_profile]
-end
-
 local function _save_current_settings_to_profile()
 	profiles = mod:get("profiles") or {}
 	local active_profile = mod:get("active_profile") or 1
@@ -1684,11 +1676,9 @@ mod:hook("InteracteeSystem", "rpc_interaction_started", function(func, self, ...
 
 	local arg_count = select("#", ...)
 	if arg_count >= 5 then
-		local channel_id = select(1, ...)
 		local unit_id = select(2, ...)
 		local is_level_unit = select(3, ...)
 		local game_object_id = select(4, ...)
-		local interaction_input_type = select(5, ...)
 
 		local interactor_unit = Managers.state.unit_spawner:unit(game_object_id)
 		local interactee_unit = Managers.state.unit_spawner:unit(unit_id, is_level_unit)
@@ -1723,7 +1713,6 @@ mod:hook("InteracteeSystem", "rpc_interaction_stopped", function(func, self, ...
 
 	local arg_count = select("#", ...)
 	if arg_count >= 4 then
-		local channel_id = select(1, ...)
 		local unit_id = select(2, ...)
 		local is_level_unit = select(3, ...)
 
