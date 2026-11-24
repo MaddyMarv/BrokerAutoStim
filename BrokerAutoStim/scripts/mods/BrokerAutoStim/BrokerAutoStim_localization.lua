@@ -159,13 +159,13 @@ return {
 		en = "Keep Max Stacks",
 	},
 	chem_dependency_timing_keep_3 = {
-		en = "Keep 3 Stacks",
+		en = "Keep At Least 3 Stacks",
 	},
 	chem_dependency_timing_keep_2 = {
-		en = "Keep 2 Stacks",
+		en = "Keep At Least 2 Stacks",
 	},
 	chem_dependency_timing_keep_1 = {
-		en = "Keep 1 Stack",
+		en = "Keep At Least 1 Stack",
 	},
 	chem_dependency_timing_ignore_stacks = {
 		en = "Ignore Stacks",

@@ -1,5 +1,6 @@
 local mod = get_mod("BrokerAutoStim")
 
+local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
 local PlayerUnitVisualLoadout = require("scripts/extension_systems/visual_loadout/utilities/player_unit_visual_loadout")
 
 local HUD_ELEMENT_CLASS_NAME = "HudElementBrokerAutoStim"
@@ -217,9 +218,9 @@ end
 
 local CHEM_TIMING_DISPLAY_NAMES = {
 	keep_max = "Keep Max Stacks",
-	keep_3 = "Keep 3 Stacks",
-	keep_2 = "Keep 2 Stacks",
-	keep_1 = "Keep 1 Stack",
+	keep_3 = "Keep At Least 3 Stacks",
+	keep_2 = "Keep At Least 2 Stacks",
+	keep_1 = "Keep At Least 1 Stack",
 	ignore_stacks = "Ignore Stacks",
 }
 
@@ -1050,12 +1051,24 @@ local function _has_nearby_dangerous_enemies()
 	return false
 end
 
+local function _is_disabled()
+	local player_unit = _get_player_unit()
+	local unit_data_extension = player_unit and ScriptUnit.has_extension(player_unit, "unit_data_system")
+	local character_state_component = unit_data_extension and unit_data_extension:read_component("character_state")
+
+	return character_state_component ~= nil and PlayerUnitStatus.is_disabled(character_state_component) == true
+end
+
 local function _start_auto_inject()
 	if not _has_broker_stim() then
 		return false
 	end
 
 	if not _can_use_stim() then
+		return false
+	end
+
+	if _is_disabled() then
 		return false
 	end
 
@@ -1326,6 +1339,12 @@ mod.update = function(dt)
 
 	if auto_stimm_stage ~= AUTO_STIMM_STAGES.NONE then
 		if auto_stimm_stage == AUTO_STIMM_STAGES.WAITING_FOR_INJECT then
+			if _is_disabled() then
+				_debug("Disabled during injection countdown, canceling")
+				last_injection_time = nil
+				_reset_auto_stimm_state()
+				return
+			end
 			if _is_currently_blocking() then
 				_debug("Blocking detected during injection countdown, canceling")
 				injection_retry_after_block = true
