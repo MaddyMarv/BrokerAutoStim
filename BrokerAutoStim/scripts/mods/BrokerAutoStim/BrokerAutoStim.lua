@@ -88,11 +88,27 @@ local auspex_active_units = {}
 local profiles = {}
 local is_loading_profile = false
 
+local CHEM_TIMING_HOLD_STACKS = {
+	keep_3 = 3,
+	keep_2 = 2,
+	keep_1 = 1,
+}
+
+local chem_ignore_stacks = false
+local chem_hold_stacks = nil
+
+local function _refresh_chem_timing()
+	local timing = mod:get("chem_dependency_timing") or "keep_max"
+	chem_ignore_stacks = timing == "ignore_stacks"
+	chem_hold_stacks = CHEM_TIMING_HOLD_STACKS[timing]
+end
+
 local function _get_default_profile_data()
 	return {
 		only_with_chemical_dependency = false,
 		not_with_stimm_supply = false,
 		stim_trigger_mode = "combat_only",
+		chem_dependency_timing = "keep_max",
 		combat_duration = 5.0,
 		out_of_combat_timeout = 5.0,
 	}
@@ -120,6 +136,7 @@ local function _save_current_settings_to_profile()
 	profiles[active_profile].only_with_chemical_dependency = mod:get("only_with_chemical_dependency")
 	profiles[active_profile].not_with_stimm_supply = mod:get("not_with_stimm_supply")
 	profiles[active_profile].stim_trigger_mode = mod:get("stim_trigger_mode")
+	profiles[active_profile].chem_dependency_timing = mod:get("chem_dependency_timing")
 	profiles[active_profile].combat_duration = mod:get("combat_duration")
 	profiles[active_profile].out_of_combat_timeout = mod:get("out_of_combat_timeout")
 
@@ -134,6 +151,7 @@ local function _load_profile_settings(profile_num)
 			profiles[profile_num].only_with_chemical_dependency ~= nil
 			or profiles[profile_num].not_with_stimm_supply ~= nil
 			or profiles[profile_num].stim_trigger_mode ~= nil
+			or profiles[profile_num].chem_dependency_timing ~= nil
 			or profiles[profile_num].combat_duration ~= nil
 			or profiles[profile_num].out_of_combat_timeout ~= nil
 		)
@@ -148,6 +166,7 @@ local function _load_profile_settings(profile_num)
 
 		local trigger_mode = profile_data.stim_trigger_mode or "combat_only"
 		mod:set("stim_trigger_mode", trigger_mode, false)
+		mod:set("chem_dependency_timing", profile_data.chem_dependency_timing or "keep_max", false)
 
 		mod:set("combat_duration", profile_data.combat_duration or 5.0, false)
 		mod:set("out_of_combat_timeout", profile_data.out_of_combat_timeout or 5.0, false)
@@ -156,10 +175,12 @@ local function _load_profile_settings(profile_num)
 		mod:set("only_with_chemical_dependency", default_data.only_with_chemical_dependency, false)
 		mod:set("not_with_stimm_supply", default_data.not_with_stimm_supply, false)
 		mod:set("stim_trigger_mode", default_data.stim_trigger_mode, false)
+		mod:set("chem_dependency_timing", default_data.chem_dependency_timing, false)
 		mod:set("combat_duration", default_data.combat_duration, false)
 		mod:set("out_of_combat_timeout", default_data.out_of_combat_timeout, false)
 	end
 
+	_refresh_chem_timing()
 	is_loading_profile = false
 end
 
@@ -172,6 +193,7 @@ local function _save_to_profile(profile_num)
 	profiles[profile_num].only_with_chemical_dependency = mod:get("only_with_chemical_dependency")
 	profiles[profile_num].not_with_stimm_supply = mod:get("not_with_stimm_supply")
 	profiles[profile_num].stim_trigger_mode = mod:get("stim_trigger_mode")
+	profiles[profile_num].chem_dependency_timing = mod:get("chem_dependency_timing")
 	profiles[profile_num].combat_duration = mod:get("combat_duration")
 	profiles[profile_num].out_of_combat_timeout = mod:get("out_of_combat_timeout")
 
@@ -193,6 +215,14 @@ local function _get_trigger_mode_display_name(trigger_mode)
 	return trigger_mode or "Combat Only"
 end
 
+local CHEM_TIMING_DISPLAY_NAMES = {
+	keep_max = "Keep Max Stacks",
+	keep_3 = "Keep 3 Stacks",
+	keep_2 = "Keep 2 Stacks",
+	keep_1 = "Keep 1 Stack",
+	ignore_stacks = "Ignore Stacks",
+}
+
 local function _show_profile_settings(profile_num)
 	profiles = mod:get("profiles") or {}
 	local profile_data = profiles[profile_num] or _get_default_profile_data()
@@ -201,6 +231,10 @@ local function _show_profile_settings(profile_num)
 	mod:echo("Chemical Dependency Only: " .. (profile_data.only_with_chemical_dependency and "Yes" or "No"))
 	mod:echo("Not with Stimm Supply: " .. (profile_data.not_with_stimm_supply and "Yes" or "No"))
 	mod:echo("Trigger Mode: " .. _get_trigger_mode_display_name(profile_data.stim_trigger_mode or "combat_only"))
+	mod:echo(
+		"Chemical Dependency Timing: "
+			.. (CHEM_TIMING_DISPLAY_NAMES[profile_data.chem_dependency_timing] or CHEM_TIMING_DISPLAY_NAMES.keep_max)
+	)
 
 	local trigger_mode = profile_data.stim_trigger_mode or "combat_only"
 	if trigger_mode == "combat_only" or trigger_mode == "non_combat_only" then
@@ -274,9 +308,11 @@ mod.on_setting_changed = function(setting_id)
 		setting_id == "only_with_chemical_dependency"
 		or setting_id == "not_with_stimm_supply"
 		or setting_id == "stim_trigger_mode"
+		or setting_id == "chem_dependency_timing"
 		or setting_id == "combat_duration"
 		or setting_id == "out_of_combat_timeout"
 	then
+		_refresh_chem_timing()
 		_save_current_settings_to_profile()
 	elseif setting_id == "show_hud_icon" then
 		local hud_element = mod.get_hud_element()
@@ -481,15 +517,36 @@ local function _get_chemical_dependency_info()
 	return cached_chem_info
 end
 
+local function _get_chem_hold_stacks(chem_info)
+	return chem_hold_stacks and math.min(chem_hold_stacks, chem_info.max_stacks) or chem_info.max_stacks
+end
+
+local function _chem_timing_allows_stim(chem_info)
+	if not chem_info or not chem_info.has_keystone or chem_ignore_stacks then
+		return true
+	end
+
+	local hold_stacks = _get_chem_hold_stacks(chem_info)
+	if chem_info.current_stacks < hold_stacks then
+		return true
+	end
+
+	if chem_info.current_stacks > hold_stacks then
+		return false
+	end
+
+	return chem_info.time_until_stack_decay ~= nil and chem_info.time_until_stack_decay <= 2.0
+end
+
 local function _get_effective_combat_duration()
 	local base_duration = mod:get("combat_duration")
 	local chem_info = _get_chemical_dependency_info()
 
-	if not chem_info or not chem_info.has_keystone then
+	if not chem_info or not chem_info.has_keystone or chem_ignore_stacks then
 		return base_duration
 	end
 
-	if chem_info.can_gain_stack then
+	if chem_info.current_stacks ~= _get_chem_hold_stacks(chem_info) then
 		return base_duration
 	end
 
@@ -1429,11 +1486,7 @@ mod.update = function(dt)
 					local can_use = _can_use_stim()
 					if not can_use then
 						_debug("Stim is on cooldown, waiting...")
-					elseif
-						not chem_info
-						or chem_info.can_gain_stack
-						or (chem_info.time_until_stack_decay and chem_info.time_until_stack_decay <= 2.0)
-					then
+					elseif _chem_timing_allows_stim(chem_info) then
 						_debug("Starting auto-inject!")
 						if _start_auto_inject() then
 							last_injection_time = current_time
@@ -1445,8 +1498,10 @@ mod.update = function(dt)
 					else
 						_debug(function()
 							return string.format(
-								"Waiting for Chemical Dependency stack to decay (%.2f seconds remaining)...",
-								chem_info.time_until_stack_decay
+								"Holding stim for Chemical Dependency (%d/%d stacks, %.2f seconds until decay)...",
+								chem_info.current_stacks,
+								chem_info.max_stacks,
+								chem_info.time_until_stack_decay or 0
 							)
 						end)
 					end

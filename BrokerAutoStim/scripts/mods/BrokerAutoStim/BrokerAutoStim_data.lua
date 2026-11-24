@@ -83,6 +83,33 @@ return {
 								default_value = false,
 							},
 							{
+								setting_id = "chem_dependency_timing",
+								type = "dropdown",
+								default_value = "keep_max",
+								options = {
+									{
+										text = "chem_dependency_timing_keep_max",
+										value = "keep_max",
+									},
+									{
+										text = "chem_dependency_timing_keep_3",
+										value = "keep_3",
+									},
+									{
+										text = "chem_dependency_timing_keep_2",
+										value = "keep_2",
+									},
+									{
+										text = "chem_dependency_timing_keep_1",
+										value = "keep_1",
+									},
+									{
+										text = "chem_dependency_timing_ignore_stacks",
+										value = "ignore_stacks",
+									},
+								},
+							},
+							{
 								setting_id = "not_with_stimm_supply",
 								type = "checkbox",
 								default_value = false,

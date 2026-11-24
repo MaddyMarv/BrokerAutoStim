@@ -149,6 +149,27 @@ return {
 		["zh-cn"] = "只有当你拥有化学依赖关键技能时才自动注射兴奋剂。",
 		["zh-tw"] = "只有當你擁有「化學性依賴」關鍵天賦時，才會自動注射興奮劑。",
 	},
+	chem_dependency_timing = {
+		en = "Chemical Dependency Timing",
+	},
+	chem_dependency_timing_description = {
+		en = "How many Chemical Dependency stacks auto-stim keeps topped up.",
+	},
+	chem_dependency_timing_keep_max = {
+		en = "Keep Max Stacks",
+	},
+	chem_dependency_timing_keep_3 = {
+		en = "Keep 3 Stacks",
+	},
+	chem_dependency_timing_keep_2 = {
+		en = "Keep 2 Stacks",
+	},
+	chem_dependency_timing_keep_1 = {
+		en = "Keep 1 Stack",
+	},
+	chem_dependency_timing_ignore_stacks = {
+		en = "Ignore Stacks",
+	},
 	not_with_stimm_supply = {
 		en = "Not with Stimm Supply",
 		["zh-cn"] = "选择兴奋剂补给时禁用自动化",

@@ -13,6 +13,7 @@ Automatically uses your Broker stim in combat. Supports profile switching, anima
 - Show Settings on Profile Switch
 - Number of Profiles to Cycle
 - Only With Chemical Dependency
+- Chemical Dependency Timing [Keep Max Stacks, Keep 3 Stacks, Keep 2 Stacks, Keep 1 Stack, Ignore Stacks]
 - Not with Stimm Supply
 - Stim Trigger Mode [Combat Only (use sliders), Non-Combat Only (use sliders), After Ability, Before Ability, Always Stim]
 - Combat Duration (seconds)
