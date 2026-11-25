@@ -5,7 +5,7 @@ return {
 		["zh-tw"] = "自動注射興奮劑",
 	},
 	mod_description = {
-		en = "Automatically uses your Broker stim in combat. Supports profile switching, animation cancels, and combat safety checks.",
+		en = "Automatically uses your Broker stim in combat. Supports profile switching, animation cancels, and combat safety checks so it won't interrupt attacks or interactions.",
 		["zh-cn"] = "在进入战斗一定时间后自动注射自制兴奋剂。",
 		["zh-tw"] = "在戰鬥中自動使用化學興奮劑。支援設定檔切換、取消動畫及戰鬥狀態檢查。",
 	},

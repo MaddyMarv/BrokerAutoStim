@@ -25,12 +25,12 @@ Automatically uses your Broker stim in combat. Supports profile switching, anima
 - Animation Cancel Stim
 
 **Auto Inject Prevention**
-- Cancel on Push / Block
-- Cancel on Attack (with Attack Cooldown)
-- Cancel While (Carrying Luggable, Reloading, Interacting, Using Auspex, During Combat Ability)
+- Cancel Injection on Push/Block
+- Cancel Injection While Attacking (with Attack Cooldown (seconds))
+- Cancel Injection (While Carrying Luggable, on Reload, During Interactions, While Using Auspex, During Combat Ability)
 
 **Dangerous Enemy Detection**
-- Block Near Threat & Range Options (Hound, Trapper, Poxburster, Crusher / Mauler, Rager)
+- Block Injection Near (Dog, Trapper, Burster, Crusher/Mauler, Rager), each with its own Detection Range
 
 **Debug**
 - Enable Debug Messages
