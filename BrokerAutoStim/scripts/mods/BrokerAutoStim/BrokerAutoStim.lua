@@ -1,5 +1,8 @@
 local mod = get_mod("BrokerAutoStim")
 
+local Breed = require("scripts/utilities/breed")
+local InteractionSettings = require("scripts/settings/interaction/interaction_settings")
+local interaction_templates = require("scripts/settings/interaction/interaction_templates")
 local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
 local PlayerUnitVisualLoadout = require("scripts/extension_systems/visual_loadout/utilities/player_unit_visual_loadout")
 
@@ -26,11 +29,20 @@ end
 
 local STIMM_SLOT_NAME = "slot_pocketable_small"
 
-local function _debug(message_or_func)
-	if not mod:get("enable_debug") then
+local debug_enabled = false
+local last_debug_message = nil
+
+local function _debug(message, ...)
+	if not debug_enabled then
 		return
 	end
-	local message = type(message_or_func) == "function" and message_or_func() or message_or_func
+	if select("#", ...) > 0 then
+		message = string.format(message, ...)
+	end
+	if message == last_debug_message then
+		return
+	end
+	last_debug_message = message
 	mod:echo(message)
 end
 
@@ -98,10 +110,49 @@ local CHEM_TIMING_HOLD_STACKS = {
 local chem_ignore_stacks = false
 local chem_hold_stacks = nil
 
-local function _refresh_chem_timing()
+local CACHED_SETTING_IDS = {
+	"only_with_chemical_dependency",
+	"not_with_stimm_supply",
+	"stim_trigger_mode",
+	"combat_duration",
+	"out_of_combat_timeout",
+	"animation_cancel_stim",
+	"cancel_on_push_block",
+	"cancel_on_attack",
+	"attack_cooldown",
+	"cancel_on_carrying",
+	"cancel_on_reload",
+	"cancel_on_interaction",
+	"cancel_on_auspex",
+	"cancel_during_ability",
+	"block_nearby_dog",
+	"dog_detection_range",
+	"block_nearby_trapper",
+	"trapper_detection_range",
+	"block_nearby_burster",
+	"burster_detection_range",
+	"block_nearby_crusher",
+	"crusher_detection_range",
+	"block_nearby_rager",
+	"rager_detection_range",
+	"enable_debug",
+	"show_hud_icon",
+}
+
+local settings = {}
+
+local function _refresh_settings()
+	for i = 1, #CACHED_SETTING_IDS do
+		local setting_id = CACHED_SETTING_IDS[i]
+		settings[setting_id] = mod:get(setting_id)
+	end
+
 	local timing = mod:get("chem_dependency_timing") or "keep_max"
 	chem_ignore_stacks = timing == "ignore_stacks"
 	chem_hold_stacks = CHEM_TIMING_HOLD_STACKS[timing]
+
+	debug_enabled = settings.enable_debug
+	last_debug_message = nil
 end
 
 local function _get_default_profile_data()
@@ -181,7 +232,7 @@ local function _load_profile_settings(profile_num)
 		mod:set("out_of_combat_timeout", default_data.out_of_combat_timeout, false)
 	end
 
-	_refresh_chem_timing()
+	_refresh_settings()
 	is_loading_profile = false
 end
 
@@ -238,8 +289,10 @@ local function _show_profile_settings(profile_num)
 	)
 
 	local trigger_mode = profile_data.stim_trigger_mode or "combat_only"
+	if trigger_mode == "combat_only" or trigger_mode == "always_stim" then
+		mod:echo("Stim Delay: " .. string.format("%.1f", profile_data.combat_duration or 5.0) .. "s")
+	end
 	if trigger_mode == "combat_only" or trigger_mode == "non_combat_only" then
-		mod:echo("Combat Duration: " .. string.format("%.1f", profile_data.combat_duration or 5.0) .. "s")
 		mod:echo("Out of Combat Timeout: " .. string.format("%.1f", profile_data.out_of_combat_timeout or 5.0) .. "s")
 	end
 end
@@ -296,6 +349,8 @@ mod.on_setting_changed = function(setting_id)
 		return
 	end
 
+	_refresh_settings()
+
 	if setting_id == "active_profile" then
 		local new_profile = mod:get("active_profile") or 1
 		local old_profile = last_active_profile or 1
@@ -313,7 +368,6 @@ mod.on_setting_changed = function(setting_id)
 		or setting_id == "combat_duration"
 		or setting_id == "out_of_combat_timeout"
 	then
-		_refresh_chem_timing()
 		_save_current_settings_to_profile()
 	elseif setting_id == "show_hud_icon" then
 		local hud_element = mod.get_hud_element()
@@ -329,6 +383,7 @@ mod.on_setting_changed = function(setting_id)
 end
 
 mod.on_settings_reset = function()
+	_refresh_settings()
 	mod:set("profiles", {}, false)
 	_initialize_profiles()
 
@@ -540,7 +595,7 @@ local function _chem_timing_allows_stim(chem_info)
 end
 
 local function _get_effective_combat_duration()
-	local base_duration = mod:get("combat_duration")
+	local base_duration = settings.combat_duration
 	local chem_info = _get_chemical_dependency_info()
 
 	if not chem_info or not chem_info.has_keystone or chem_ignore_stacks then
@@ -570,9 +625,7 @@ local function _mark_combat_started()
 
 	if not combat_start_time then
 		combat_start_time = current_time
-		_debug(function()
-			return "Combat started! Has stim: " .. tostring(_has_broker_stim())
-		end)
+		_debug("Combat started! Has stim: %s", tostring(_has_broker_stim()))
 	end
 end
 
@@ -587,7 +640,7 @@ local function _is_in_combat()
 	end
 
 	local time_since_combat = current_time - last_combat_time
-	local combat_timeout = mod:get("out_of_combat_timeout")
+	local combat_timeout = settings.out_of_combat_timeout
 
 	return time_since_combat <= combat_timeout
 end
@@ -629,11 +682,11 @@ local function _get_combat_ability_cooldown()
 end
 
 local function _is_combat_ability_active(allow_on_ability_use)
-	if not mod:get("cancel_during_ability") then
+	if not settings.cancel_during_ability then
 		return false
 	end
 
-	if allow_on_ability_use and mod:get("stim_trigger_mode") == "on_ability_use" and combat_ability_just_used then
+	if allow_on_ability_use and settings.stim_trigger_mode == "on_ability_use" and combat_ability_just_used then
 		return false
 	end
 
@@ -703,13 +756,14 @@ local function _check_stage_timeout()
 
 	local time_in_stage = current_time - stage_start_time
 	if time_in_stage >= timeout then
-		_debug(function()
-			local stage_name = auto_stimm_stage == AUTO_STIMM_STAGES.SWITCH_TO and "SWITCH_TO"
+		_debug(
+			"Stage timeout! Resetting from %s after %.2f seconds",
+			auto_stimm_stage == AUTO_STIMM_STAGES.SWITCH_TO and "SWITCH_TO"
 				or auto_stimm_stage == AUTO_STIMM_STAGES.WAITING_FOR_INJECT and "WAITING_FOR_INJECT"
 				or auto_stimm_stage == AUTO_STIMM_STAGES.SWITCH_BACK and "SWITCH_BACK"
-				or "UNKNOWN"
-			return string.format("Stage timeout! Resetting from %s after %.2f seconds", stage_name, time_in_stage)
-		end)
+				or "UNKNOWN",
+			time_in_stage
+		)
 		_reset_auto_stimm_state()
 		return true
 	end
@@ -768,37 +822,54 @@ end
 
 local DANGEROUS_BREEDS = {
 	chaos_poxwalker_bomber = {
+		display_name = "Burster",
 		range_setting = "burster_detection_range",
 		enabled_setting = "block_nearby_burster",
 	},
 	renegade_netgunner = {
+		display_name = "Trapper",
 		range_setting = "trapper_detection_range",
 		enabled_setting = "block_nearby_trapper",
 	},
 	chaos_hound = {
+		display_name = "Dog",
+		range_setting = "dog_detection_range",
+		enabled_setting = "block_nearby_dog",
+	},
+	chaos_hound_mutator = {
+		display_name = "Dog",
+		range_setting = "dog_detection_range",
+		enabled_setting = "block_nearby_dog",
+	},
+	chaos_armored_hound = {
+		display_name = "Armored Dog",
 		range_setting = "dog_detection_range",
 		enabled_setting = "block_nearby_dog",
 	},
 	chaos_ogryn_executor = {
+		display_name = "Crusher",
 		range_setting = "crusher_detection_range",
 		enabled_setting = "block_nearby_crusher",
 	},
 	renegade_executor = {
+		display_name = "Mauler",
 		range_setting = "crusher_detection_range",
 		enabled_setting = "block_nearby_crusher",
 	},
 	renegade_berzerker = {
+		display_name = "Rager",
 		range_setting = "rager_detection_range",
 		enabled_setting = "block_nearby_rager",
 	},
 	cultist_berzerker = {
+		display_name = "Rager",
 		range_setting = "rager_detection_range",
 		enabled_setting = "block_nearby_rager",
 	},
 }
 
 local function _is_currently_blocking()
-	if not mod:get("cancel_on_push_block") then
+	if not settings.cancel_on_push_block then
 		return false
 	end
 
@@ -821,7 +892,7 @@ local function _is_currently_blocking()
 end
 
 local function _is_currently_attacking()
-	if not mod:get("cancel_on_attack") then
+	if not settings.cancel_on_attack then
 		return false
 	end
 
@@ -830,7 +901,7 @@ local function _is_currently_attacking()
 		return false
 	end
 
-	local attack_cooldown = mod:get("attack_cooldown") or 0.5
+	local attack_cooldown = settings.attack_cooldown or 0.5
 
 	if holding_attack then
 		last_attack_time = current_time
@@ -868,7 +939,7 @@ local function _is_currently_attacking()
 end
 
 local function _is_carrying_luggable()
-	if not mod:get("cancel_on_carrying") then
+	if not settings.cancel_on_carrying then
 		return false
 	end
 
@@ -892,7 +963,7 @@ local function _is_carrying_luggable()
 end
 
 local function _is_using_auspex()
-	if not mod:get("cancel_on_auspex") then
+	if not settings.cancel_on_auspex then
 		return false
 	end
 
@@ -929,7 +1000,7 @@ local function _is_using_auspex()
 end
 
 local function _is_interacting()
-	if not mod:get("cancel_on_interaction") then
+	if not settings.cancel_on_interaction then
 		return false
 	end
 
@@ -952,14 +1023,12 @@ local function _is_interacting()
 		return false
 	end
 
-	local InteractionSettings = require("scripts/settings/interaction/interaction_settings")
 	local interaction_states = InteractionSettings.states
 	local state = interaction_component.state
 
 	if state == interaction_states.is_interacting then
 		local interaction_type = interaction_component.type
 		if interaction_type then
-			local interaction_templates = require("scripts/settings/interaction/interaction_templates")
 			local template = interaction_templates[interaction_type]
 			if template and template.duration and template.duration > 0 then
 				return true
@@ -971,7 +1040,7 @@ local function _is_interacting()
 end
 
 local function _is_currently_reloading()
-	if not mod:get("cancel_on_reload") then
+	if not settings.cancel_on_reload then
 		return false
 	end
 
@@ -992,6 +1061,8 @@ local function _is_currently_reloading()
 
 	return running_action_name == "action_reload"
 end
+
+local dangerous_enemy_results = {}
 
 local function _has_nearby_dangerous_enemies()
 	local player_unit = _get_player_unit()
@@ -1017,13 +1088,12 @@ local function _has_nearby_dangerous_enemies()
 
 	local from_pos = Unit.world_position(player_unit, 1)
 	local enemy_side_names = side:relation_side_names("enemy")
-	local Breed = require("scripts/utilities/breed")
 
 	for breed_name, breed_data in pairs(DANGEROUS_BREEDS) do
-		if mod:get(breed_data.enabled_setting) then
-			local scan_radius = mod:get(breed_data.range_setting) or 15.0
+		if settings[breed_data.enabled_setting] then
+			local scan_radius = settings[breed_data.range_setting] or 15.0
 			if scan_radius > 0 then
-				local results = {}
+				local results = dangerous_enemy_results
 				local count = broadphase.query(broadphase, from_pos, scan_radius, results, enemy_side_names)
 
 				if count and count > 0 then
@@ -1032,13 +1102,11 @@ local function _has_nearby_dangerous_enemies()
 						if Unit.alive(unit) then
 							local breed = Breed.unit_breed_or_nil(unit)
 							if breed and breed.name == breed_name then
-								_debug(function()
-									return string.format(
-										"Dangerous enemy detected nearby: %s (%.1fm)",
-										breed_name,
-										scan_radius
-									)
-								end)
+								_debug(
+									"Dangerous enemy nearby: %s (%.1fm), holding stim",
+									breed_data.display_name,
+									scan_radius
+								)
 								return true
 							end
 						end
@@ -1059,6 +1127,14 @@ local function _is_disabled()
 	return character_state_component ~= nil and PlayerUnitStatus.is_disabled(character_state_component) == true
 end
 
+local function _get_wielded_slot()
+	local player_unit = _get_player_unit()
+	local unit_data_extension = player_unit and ScriptUnit.has_extension(player_unit, "unit_data_system")
+	local inventory_component = unit_data_extension and unit_data_extension:read_component("inventory")
+
+	return inventory_component and inventory_component.wielded_slot
+end
+
 local function _start_auto_inject()
 	if not _has_broker_stim() then
 		return false
@@ -1069,6 +1145,7 @@ local function _start_auto_inject()
 	end
 
 	if _is_disabled() then
+		_debug("Disabled, holding stim")
 		return false
 	end
 
@@ -1081,7 +1158,6 @@ local function _start_auto_inject()
 	end
 
 	if _has_nearby_dangerous_enemies() then
-		_debug("Dangerous enemies nearby, blocking injection")
 		dangerous_enemies_nearby = true
 		injection_retry_after_enemies = true
 		return false
@@ -1133,6 +1209,10 @@ local function _start_auto_inject()
 		return false
 	end
 
+	if not current_wield_slot then
+		current_wield_slot = _get_wielded_slot()
+	end
+
 	local current_time = _get_gameplay_time()
 	if current_wield_slot == STIMM_SLOT_NAME then
 		auto_stimm_stage = AUTO_STIMM_STAGES.WAITING_FOR_INJECT
@@ -1140,6 +1220,7 @@ local function _start_auto_inject()
 		_debug("Stim already wielded, waiting for auto-inject...")
 	else
 		if not _is_weapon_template_valid(current_wield_slot) then
+			_debug("No valid weapon wielded, waiting...")
 			return false
 		end
 		if current_wield_slot and current_wield_slot ~= STIMM_SLOT_NAME then
@@ -1152,6 +1233,10 @@ local function _start_auto_inject()
 	end
 
 	return true
+end
+
+mod.get_show_hud_icon = function()
+	return settings.show_hud_icon
 end
 
 mod.get_auto_stim_enabled = function()
@@ -1174,6 +1259,10 @@ end
 
 mod.update = function(dt)
 	if not mod:is_enabled() or not auto_stim_enabled then
+		return
+	end
+
+	if _get_archetype() ~= "broker" then
 		return
 	end
 
@@ -1408,11 +1497,13 @@ mod.update = function(dt)
 	local chem_info = _get_chemical_dependency_info()
 	local has_chemical_dependency = chem_info and chem_info.has_keystone
 
-	if mod:get("only_with_chemical_dependency") and not has_chemical_dependency then
+	if settings.only_with_chemical_dependency and not has_chemical_dependency then
+		_debug("No Chemical Dependency keystone, auto-stim off for this profile")
 		return
 	end
 
-	if mod:get("not_with_stimm_supply") and _has_stimm_supply() then
+	if settings.not_with_stimm_supply and _has_stimm_supply() then
+		_debug("Stimm Field equipped, auto-stim off for this profile")
 		return
 	end
 
@@ -1428,7 +1519,7 @@ mod.update = function(dt)
 
 	local effective_duration = _get_effective_combat_duration()
 	local in_combat = _is_in_combat()
-	local stim_trigger_mode = mod:get("stim_trigger_mode")
+	local stim_trigger_mode = settings.stim_trigger_mode
 
 	local should_process = false
 	if stim_trigger_mode == "on_ability_use" then
@@ -1467,63 +1558,41 @@ mod.update = function(dt)
 			if not last_injection_time then
 				should_check_injection = true
 			else
-				local cooldown = mod:get("out_of_combat_timeout") or 5.0
+				local cooldown = settings.out_of_combat_timeout or 5.0
 				should_check_injection = time_since_last_injection >= cooldown
 			end
 		end
 
 		if should_check_injection then
-			local has_stim = _has_broker_stim()
-
-			if chem_info and chem_info.has_keystone then
-				_debug(function()
-					local time_until_decay_str = chem_info.time_until_stack_decay
-							and string.format("%.2f", chem_info.time_until_stack_decay)
-						or "N/A"
-					return string.format(
-						"Duration reached! Time since last: %.2f Effective: %.2f Stacks: %d/%d Time until decay: %s",
-						time_since_last_injection,
-						effective_duration,
-						chem_info.current_stacks,
-						chem_info.max_stacks,
-						time_until_decay_str
-					)
-				end)
-			else
-				_debug(function()
-					return "Duration reached! Time since last: "
-						.. string.format("%.2f", time_since_last_injection)
-						.. " Has stim: "
-						.. tostring(has_stim)
-				end)
-			end
-
-			if has_stim then
+			if _has_broker_stim() then
 				if not _is_weapon_template_valid(STIMM_SLOT_NAME) then
 					_debug("Stim template not ready yet, waiting...")
-				else
-					local can_use = _can_use_stim()
-					if not can_use then
-						_debug("Stim is on cooldown, waiting...")
-					elseif _chem_timing_allows_stim(chem_info) then
-						_debug("Starting auto-inject!")
-						if _start_auto_inject() then
-							last_injection_time = current_time
-							if stim_trigger_mode == "on_ability_use" or stim_trigger_mode == "after_ability_end" then
-								combat_ability_just_used = false
-								combat_ability_just_ended = false
-							end
+				elseif not _can_use_stim() then
+					_debug("Stim is on cooldown, waiting...")
+				elseif _chem_timing_allows_stim(chem_info) then
+					if _start_auto_inject() then
+						last_injection_time = current_time
+						if stim_trigger_mode == "on_ability_use" or stim_trigger_mode == "after_ability_end" then
+							combat_ability_just_used = false
+							combat_ability_just_ended = false
 						end
-					else
-						_debug(function()
-							return string.format(
-								"Holding stim for Chemical Dependency (%d/%d stacks, %.2f seconds until decay)...",
+						if has_chemical_dependency then
+							_debug(
+								"Starting auto-inject (%d/%d stacks, %.1fs until decay)",
 								chem_info.current_stacks,
 								chem_info.max_stacks,
 								chem_info.time_until_stack_decay or 0
 							)
-						end)
+						else
+							_debug("Starting auto-inject")
+						end
 					end
+				else
+					_debug(
+						"Holding stim for Chemical Dependency (%d/%d stacks)",
+						chem_info.current_stacks,
+						chem_info.max_stacks
+					)
 				end
 			else
 				_debug("No broker stim found!")
@@ -1597,7 +1666,7 @@ mod:hook_safe(
 				_debug("Combat ability button pressed - action starting")
 			end
 
-			if action_name == "action_push" and mod:get("cancel_on_push_block") then
+			if action_name == "action_push" and settings.cancel_on_push_block then
 				push_in_progress = true
 				local player_unit = _get_player_unit()
 				local injection_running = false
@@ -1633,7 +1702,7 @@ mod:hook_safe(
 				end
 			end
 
-			if action_name == "action_block" and mod:get("cancel_on_push_block") then
+			if action_name == "action_block" and settings.cancel_on_push_block then
 				block_in_progress = true
 				local player_unit = _get_player_unit()
 				local injection_running = false
@@ -1699,7 +1768,7 @@ mod:hook_safe(
 				stage_start_time = current_time
 				last_injection_time = current_time
 
-				if mod:get("animation_cancel_stim") then
+				if settings.animation_cancel_stim then
 					_debug("Auto-inject detected! Canceling animation and switching back")
 					local target_slot = unwield_to_slot or last_equipped_slot
 					if target_slot then
@@ -1722,7 +1791,7 @@ mod:hook_safe(
 local _input_action_hook = function(func, self, action_name)
 	local val = func(self, action_name)
 
-	if mod:get("cancel_on_attack") then
+	if settings.cancel_on_attack then
 		if action_name == "action_one_hold" or action_name == "action_one_pressed" then
 			holding_attack = val or false
 		elseif action_name == "action_one_release" then
@@ -1766,7 +1835,6 @@ mod:hook("InteracteeSystem", "rpc_interaction_started", function(func, self, ...
 				end
 
 				if interaction_type and interaction_type ~= "none" then
-					local interaction_templates = require("scripts/settings/interaction/interaction_templates")
 					local template = interaction_templates[interaction_type]
 					if template and template.duration and template.duration > 0 then
 						if interactor_unit ~= nil then
@@ -1836,7 +1904,6 @@ mod:hook("InteracteeExtension", "started", function(func, self, interactor_unit,
 		end
 
 		if interaction_type and interaction_type ~= "none" then
-			local interaction_templates = require("scripts/settings/interaction/interaction_templates")
 			local template = interaction_templates[interaction_type]
 			if template and template.duration and template.duration > 0 then
 				interaction_active_units[interactor_unit] = {
@@ -1863,7 +1930,6 @@ mod:hook("PlayerInteracteeExtension", "started", function(func, self, interactor
 	if interactor_unit then
 		local interaction_type = self:interaction_type()
 		if interaction_type and interaction_type ~= "none" then
-			local interaction_templates = require("scripts/settings/interaction/interaction_templates")
 			local template = interaction_templates[interaction_type]
 			if template and template.duration and template.duration > 0 then
 				interaction_active_units[interactor_unit] = {
@@ -1944,11 +2010,13 @@ mod.on_game_state_changed = function(status, state_name)
 	end
 end
 
-Managers.event:register(mod, "player_unit_spawned", function(player)
+mod.handle_player_unit_spawned = function(self, player)
 	if player == Managers.player:local_player(1) then
 		_reset_all_state()
 	end
-end)
+end
+
+Managers.event:register(mod, "player_unit_spawned", "handle_player_unit_spawned")
 
 mod.on_all_mods_loaded = function()
 	if Managers.package then

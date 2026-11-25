@@ -110,14 +110,14 @@ return {
 		["zh-tw"] = "切換自動注射興奮劑開關的快捷鍵。",
 	},
 	combat_duration = {
-		en = "Combat Duration (seconds)",
-		["zh-cn"] = "战斗持续时间（秒）",
-		["zh-tw"] = "戰鬥持續時間（秒）",
+		en = "Stim Delay (seconds)",
+		["zh-cn"] = "兴奋剂延迟（秒）",
+		["zh-tw"] = "興奮劑延遲（秒）",
 	},
 	combat_duration_description = {
-		en = "How long to be in combat before auto-stimming.",
-		["zh-cn"] = "进入战斗后多久自动注射兴奋剂。",
-		["zh-tw"] = "自動注射興奮劑前，需要處於戰鬥多久。",
+		en = "Seconds to wait after combat starts and between stims.",
+		["zh-cn"] = "进入战斗后以及两次注射之间等待的秒数。",
+		["zh-tw"] = "進入戰鬥後以及兩次注射之間等待的秒數。",
 	},
 	out_of_combat_timeout = {
 		en = "Out of Combat Timeout (seconds)",
@@ -391,14 +391,14 @@ return {
 		["zh-tw"] = "使用技能前",
 	},
 	stim_trigger_mode_combat_only = {
-		en = "Combat Only (use sliders)",
-		["zh-cn"] = "仅在战斗时（使用滑块设置）",
-		["zh-tw"] = "僅在戰鬥時（使用滑桿設定）",
+		en = "Combat Only",
+		["zh-cn"] = "仅在战斗时",
+		["zh-tw"] = "僅在戰鬥時",
 	},
 	stim_trigger_mode_non_combat_only = {
-		en = "Non-Combat Only (use sliders)",
-		["zh-cn"] = "仅在非战斗时（使用滑块设置）",
-		["zh-tw"] = "僅在非戰鬥時（使用滑桿設定）",
+		en = "Non-Combat Only",
+		["zh-cn"] = "仅在非战斗时",
+		["zh-tw"] = "僅在非戰鬥時",
 	},
 	stim_trigger_mode_always_stim = {
 		en = "Always Stim",

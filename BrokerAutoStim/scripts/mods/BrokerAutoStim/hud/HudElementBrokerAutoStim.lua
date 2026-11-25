@@ -40,7 +40,7 @@ local HudElementBrokerAutoStim = class("HudElementBrokerAutoStim", "HudElementBa
 
 HudElementBrokerAutoStim.init = function(self, parent, draw_layer, start_scale)
 	HudElementBrokerAutoStim.super.init(self, parent, draw_layer, start_scale, ui_definitions)
-	local enabled = mod.get_auto_stim_enabled and mod.get_auto_stim_enabled() or true
+	local enabled = not mod.get_auto_stim_enabled or mod.get_auto_stim_enabled()
 	self:set_enabled_state(enabled)
 	self:update_visibility()
 	self:set_side_length(mod:get("hud_icon_size") or 30)
@@ -48,7 +48,8 @@ end
 
 HudElementBrokerAutoStim.update_visibility = function(self)
 	local should_show = mod:is_enabled()
-		and mod:get("show_hud_icon")
+		and mod.get_show_hud_icon
+		and mod.get_show_hud_icon()
 		and mod.is_broker_with_stim
 		and mod.is_broker_with_stim()
 	self._widgets_by_name.broker_auto_stim.style.icon.visible = should_show or false
@@ -65,7 +66,7 @@ end
 HudElementBrokerAutoStim.update = function(self, dt, t, ui_renderer, render_settings, input_service)
 	HudElementBrokerAutoStim.super.update(self, dt, t, ui_renderer, render_settings, input_service)
 
-	if mod:get("show_hud_icon") then
+	if mod.get_show_hud_icon and mod.get_show_hud_icon() then
 		self:update_visibility()
 	end
 end
